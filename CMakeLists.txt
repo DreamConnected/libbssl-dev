@@ -803,6 +803,26 @@ if(BUILD_TESTING)
   endif()
 endif()
 
+file(READ "${CMAKE_SOURCE_DIR}/include/openssl/base.h" VERSION_CONTENT)
+string(REGEX MATCH "#define OPENSSL_VERSION_NUMBER 0x([0-9a-fA-F]+)" VERSION_DEFINE "${VERSION_CONTENT}")
+
+if(VERSION_DEFINE)
+  string(REGEX REPLACE "#define OPENSSL_VERSION_NUMBER 0x" "" VERSION_HEX "${VERSION_DEFINE}")
+  math(EXPR VERSION "0x${VERSION_HEX}")
+  math(EXPR MAJOR_VERSION "${VERSION} >> 28")
+  math(EXPR MINOR_VERSION "${VERSION} >> 20 & 0xFF")
+  math(EXPR PATCH_VERSION "${VERSION} >> 12 & 0xFF")
+  math(EXPR BUILD_VERSION "${VERSION} & 0xFF")
+  set(BORINGSSL_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}")
+  message(STATUS "OpenSSL version: ${BORINGSSL_VERSION}")
+else()
+  message(WARNING "Could not find OPENSSL_VERSION_NUMBER in base.h")
+endif()
+
+configure_file(${CMAKE_SOURCE_DIR}/libssl.pc.in ${CMAKE_SOURCE_DIR}/libssl.pc @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/boringssl.pc.in ${CMAKE_SOURCE_DIR}/boringssl.pc @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/libcrypto.pc.in ${CMAKE_SOURCE_DIR}/libcrypto.pc @ONLY)
+
 if(INSTALL_ENABLED)
   install(TARGETS crypto ssl EXPORT OpenSSLTargets)
   install(TARGETS bssl)
@@ -811,5 +831,7 @@ if(INSTALL_ENABLED)
           FILE OpenSSLTargets.cmake
           NAMESPACE OpenSSL::
           DESTINATION lib/cmake/OpenSSL)
+  install(FILES libssl.pc boringssl.pc libcrypto.pc
+          DESTINATION lib/pkgconfig)
   install(FILES cmake/OpenSSLConfig.cmake DESTINATION lib/cmake/OpenSSL)
 endif()
