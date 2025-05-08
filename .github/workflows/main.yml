@@ -46,6 +46,7 @@ jobs:
 
         cmake --build build -j $(nproc)
         sudo cmake --install build
+        echo "RELEASE_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4.3.1
@@ -55,10 +56,9 @@ jobs:
     
     - name: Create Release and Upload Release Asset
       uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
       with:
-        tag_name: ${{ github.ref }}
-        name: Release ${{ github.ref }}
+        tag_name: ${{ env.RELEASE_DATE }}
+        name: Release ${{ env.RELEASE_DATE }}
         body: TODO New Release.
         draft: false
         prerelease: false
