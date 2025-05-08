@@ -1,0 +1,54 @@
+name: Android Build Libbssl-dev
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_arch:
+        description: 'Target architecture (arm64-v8a/armeabi-v7a)'
+        required: false
+        default: 'arm64-v8a'
+      ndk_version:
+        description: 'Android NDK version'
+        required: false
+        default: 'r27c'
+      android_api:
+        description: 'Android API level'
+        required: false
+        default: '30'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Android NDK
+      uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: ${{ github.event.inputs.ndk_version || 'r27c' }}
+
+    - name: Install dependencies
+      run: sudo apt-get install -y build-essential ninja-build
+
+    - name: Set build parameters
+      id: vars
+      run: |        
+        echo "target=${{ github.event.inputs.target_arch || 'arm64-v8a' }} >> $GITHUB_OUTPUT
+        echo "api=${{ github.event.inputs.android_api || '30' }}" >> $GITHUB_OUTPUT
+
+    - name: Build boringssl
+      run: |
+        export TARGET=${{ steps.vars.outputs.target }}
+        export API=${{ steps.vars.outputs.api }}
+
+        cmake -DANDROID_ABI=${TARGET} -DANDROID_PLATFORM=android-${API} -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
+        -GNinja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=1 -DCMAKE_INSTALL_PREFIX=/data/sysroot -B build
+
+        cmake --build build
+        sudo cmake --install build
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4.3.1
+      with:
+        name: android-${{ github.event.inputs.target_arch || 'arm64-v8a' }}-libbssl-dev
+        path: /data/sysroot/*
