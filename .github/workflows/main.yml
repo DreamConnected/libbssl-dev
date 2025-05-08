@@ -53,6 +53,9 @@ jobs:
       with:
         name: android-${{ github.event.inputs.target_arch || 'arm64-v8a' }}-libbssl-dev
         path: /data/sysroot/*
+
+    - name: Create a ZIP file for artifact
+      run: zip -r android-${{ github.event.inputs.target_arch || 'arm64-v8a' }}-libbssl-dev.zip /data/sysroot/*
     
     - name: Create Release and Upload Release Asset
       uses: softprops/action-gh-release@v1
