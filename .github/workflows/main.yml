@@ -33,7 +33,7 @@ jobs:
     - name: Set build parameters
       id: vars
       run: |        
-        echo "target=${{ github.event.inputs.target_arch || 'arm64-v8a' }} >> $GITHUB_OUTPUT
+        echo "target=${{ github.event.inputs.target_arch || 'arm64-v8a' }}" >> $GITHUB_OUTPUT
         echo "api=${{ github.event.inputs.android_api || '30' }}" >> $GITHUB_OUTPUT
 
     - name: Build boringssl
